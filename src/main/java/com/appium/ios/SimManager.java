@@ -69,7 +69,7 @@ public class SimManager {
             try {
                 userCapabilityLocation = ConfigFileManager.getInstance()
                         .getProperty("CAPS");
-            } catch (IOException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
             Path path = FileSystems.getDefault().getPath(userCapabilityLocation);

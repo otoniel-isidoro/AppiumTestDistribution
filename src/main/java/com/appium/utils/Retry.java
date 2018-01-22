@@ -20,7 +20,7 @@ public class Retry implements IRetryAnalyzer {
     public Retry() {
         try {
             prop = ConfigFileManager.getInstance();
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }

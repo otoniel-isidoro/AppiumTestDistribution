@@ -23,6 +23,7 @@ public class AppiumServerManager {
 
     private AvailablePorts ap;
     private IOSDeviceConfiguration iosDeviceConfiguration;
+    private ConfigFileManager configFileManager;
     private static final Logger LOGGER = Logger.getLogger(Class.class.getSimpleName());
 
     public static AppiumDriverLocalService getAppiumDriverLocalService() {
@@ -40,6 +41,7 @@ public class AppiumServerManager {
     public AppiumServerManager() throws IOException {
         iosDeviceConfiguration = new IOSDeviceConfiguration();
         ap = new AvailablePorts();
+        configFileManager = ConfigFileManager.getInstance();
     }
 
     /**
@@ -57,8 +59,7 @@ public class AppiumServerManager {
         AppiumDriverLocalService appiumDriverLocalService;
         int port = ap.getPort();
         AppiumServiceBuilder builder =
-                new AppiumServiceBuilder().withAppiumJS(new File(ConfigFileManager
-                        .configFileMap.get("APPIUM_JS_PATH")))
+                new AppiumServiceBuilder()
                         .withArgument(GeneralServerFlag.LOG_LEVEL, "info").withLogFile(new File(
                         System.getProperty("user.dir")
                                 + "/target/appiumlogs/appium_logs.txt"))
@@ -106,12 +107,12 @@ public class AppiumServerManager {
 
     public void stopAppiumServer() throws IOException, InterruptedException {
         destroyAppiumNode();
-        if (System.getenv("STF_URL") != null
-                && System.getenv("ACCESS_TOKEN") != null) {
-            List<Device> devices = DeviceAllocationManager.service.getDevices().getDevices();
+        if (configFileManager.getProperty("STF_URL") != null
+                && configFileManager.getProperty("STF_ACCESS_TOKEN") != null) {
+            List<Device> devices = DeviceAllocationManager.stfService.getDevices().getDevices();
             devices.forEach(device -> {
-                if (device.isPresent()) {
-                    DeviceAllocationManager.service.deleteDeviceBySerial(device.getSerial());
+                if (device.isPresent() && device.getOwner() != null && device.isUsing()) {
+                    DeviceAllocationManager.stfService.deleteDeviceBySerial(device.getSerial());
                 }
             });
         }

@@ -35,6 +35,10 @@
             <name>Srinivasan Sekar</name>
             <email>srinivasan.sekar1990@gmail.com</email>
         </developer>
+        <developer>
+            <name>Otoniel Isidoro</name>
+            <email>otoniel.isidoro@gmail.com</email>
+        </developer>
     </developers>
 
 
@@ -153,7 +157,12 @@
         <dependency>
             <groupId>com.github.yunusmete.stf</groupId>
             <artifactId>openstf-java-client</artifactId>
-            <version>1.0</version>
+            <version>1.1</version>
+        </dependency>
+        <dependency>
+            <groupId>se.vidstige</groupId>
+            <artifactId>jadb</artifactId>
+            <version>1.0.1-SNAPSHOT</version>
         </dependency>
     </dependencies>
 

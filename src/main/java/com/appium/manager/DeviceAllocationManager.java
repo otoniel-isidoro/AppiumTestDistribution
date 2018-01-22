@@ -9,6 +9,7 @@ import com.github.yunusmete.stf.api.STFService;
 import com.github.yunusmete.stf.api.ServiceGenerator;
 import com.github.yunusmete.stf.model.DeviceBody;
 import com.github.yunusmete.stf.rest.DeviceResponse;
+import com.github.yunusmete.stf.rest.RemoteConnectResponse;
 import com.thoughtworks.android.AndroidManager;
 import com.thoughtworks.device.Device;
 import com.thoughtworks.device.DeviceManager;
@@ -16,10 +17,14 @@ import com.thoughtworks.iOS.IOSManager;
 import org.apache.commons.lang3.SystemUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import se.vidstige.jadb.ConnectionToRemoteDeviceException;
+import se.vidstige.jadb.JadbConnection;
+import se.vidstige.jadb.JadbException;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.nio.file.FileSystems;
@@ -36,31 +41,33 @@ import java.util.logging.Logger;
  * DeviceAllocationManager - Handles device initialisation, allocation and de-allocattion
  */
 public class DeviceAllocationManager {
-
     private ArrayList<String> devices = new ArrayList<>();
     public ConcurrentHashMap<String, Object> deviceMapping;
     private static DeviceAllocationManager instance;
     private static IOSManager iosDevice;
     private static AndroidManager androidManager;
     public List<Device> deviceManager;
-    private static final String STF_SERVICE_URL = System.getenv("STF_URL");
-    private static final String ACCESS_TOKEN = System.getenv("STF_ACCESS_TOKEN");
-    static STFService service;
+    private static final String STF_SERVICE_URL = ConfigFileManager.getInstance().getProperty("STF_URL");
+    private static final String ACCESS_TOKEN = ConfigFileManager.getInstance().getProperty("STF_ACCESS_TOKEN");
+    static STFService stfService;
     private static final Logger LOGGER = Logger.getLogger(Class.class.getName());
     private SimManager simManager = new SimManager();
     private AppiumDriverManager appiumDriverManager;
     private static boolean simCapsPresent = false;
     private static boolean deviceCapsPresent = false;
+    private ConfigFileManager configFileManager;
 
     private DeviceAllocationManager() throws Exception {
         try {
             iosDevice = new IOSManager();
             deviceMapping = new ConcurrentHashMap<>();
-            deviceManager = new CopyOnWriteArrayList<>(new DeviceManager().getDeviceProperties());
             androidManager = new AndroidManager();
             appiumDriverManager = new AppiumDriverManager();
-            service = ServiceGenerator.createService(STFService.class,
+            configFileManager = ConfigFileManager.getInstance();
+            stfService = ServiceGenerator.createService(STFService.class,
                     STF_SERVICE_URL + "/api/v1", ACCESS_TOKEN);
+            connectToSTF();
+            deviceManager = new CopyOnWriteArrayList<>(new DeviceManager().getDeviceProperties());
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -99,7 +106,6 @@ public class DeviceAllocationManager {
                 }
             }
             if (platform.equalsIgnoreCase("android")) {
-                connectToSTF();
                 if (AndroidDeviceConfiguration.validDeviceIds.size() > 0) {
                     LOGGER.info("Adding Android Devices from DeviceList Provided");
                     devices.addAll(AndroidDeviceConfiguration.validDeviceIds);
@@ -200,17 +206,15 @@ public class DeviceAllocationManager {
                 }
             });
         }
-        connectToSTF();
     }
 
     private void connectToSTF() {
         try {
-            if (STF_SERVICE_URL != null && ACCESS_TOKEN != null) {
+            if (!System.getenv("Platform").equalsIgnoreCase("iOS") &&
+                    STF_SERVICE_URL != null && ACCESS_TOKEN != null) {
                 connectToSTFServer();
             }
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        } catch (URISyntaxException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -252,13 +256,25 @@ public class DeviceAllocationManager {
         }
     }
 
-    private void connectToSTFServer() throws MalformedURLException, URISyntaxException {
-        DeviceResponse devices = service.getDevices();
+    private void connectToSTFServer() {
+        DeviceResponse devices = stfService.getDevices();
         List<com.github.yunusmete.stf.model.Device> deviceList = devices.getDevices();
         for (com.github.yunusmete.stf.model.Device device : deviceList) {
-            if (device.isPresent()) {
+            if (device.isPresent() && device.isReady()) {
                 if (device.getOwner() == null) {
-                    service.addDeviceToUser(new DeviceBody(device.getSerial(), 90000));
+                    stfService.addDeviceToUser(new DeviceBody(device.getSerial(), 90000));
+                    if (ConfigFileManager.getInstance().getProperty("STF_ADB_REMOTE_CONNECT").equalsIgnoreCase("true")) {
+                        RemoteConnectResponse remoteConnectResponse = stfService.remoteConnectDeviceBySerial(device.getSerial(), new DeviceBody(device.getSerial(), 90000));
+                        if (remoteConnectResponse.isSuccess()) {
+                            try {
+                                androidManager.connectRemote(remoteConnectResponse.getRemoteConnectUrl());
+                                Thread.sleep(100);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }
+
                 }
             }
         }

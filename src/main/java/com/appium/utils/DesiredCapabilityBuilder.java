@@ -4,6 +4,7 @@ import com.appium.entities.MobilePlatform;
 import com.appium.ios.IOSDeviceConfiguration;
 import com.appium.manager.AppiumDeviceManager;
 import com.appium.manager.DeviceAllocationManager;
+import com.thoughtworks.device.Device;
 import com.thoughtworks.device.SimulatorManager;
 import io.appium.java_client.remote.AndroidMobileCapabilityType;
 import io.appium.java_client.remote.AutomationName;
@@ -17,6 +18,7 @@ import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -94,6 +96,13 @@ public class DesiredCapabilityBuilder {
                         AutomationName.ANDROID_UIAUTOMATOR2);
                 desiredCapabilities.setCapability(AndroidMobileCapabilityType.SYSTEM_PORT,
                         Integer.parseInt(port.toString()));
+                Device androidDevice = DeviceAllocationManager.getInstance().deviceManager.stream().filter(
+                        device -> Objects.equals(device.getUdid(), AppiumDeviceManager.getDeviceUDID())
+                ).findFirst().get();
+                desiredCapabilities.setCapability(MobileCapabilityType.DEVICE_NAME, androidDevice.getName());
+                desiredCapabilities.setCapability(MobileCapabilityType.PLATFORM_VERSION,
+                        androidDevice.getOsVersion());
+
             }
             appPackage(desiredCapabilities);
         } else if (AppiumDeviceManager.getMobilePlatform().equals(MobilePlatform.IOS)) {

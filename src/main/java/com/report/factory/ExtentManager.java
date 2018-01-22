@@ -36,8 +36,7 @@ public class ExtentManager {
                 extent.setSystemInfo("Selenium Java Version", "3.3.1");
                 String appiumVersion = null;
                 try {
-                    String command = "node "
-                            + configFileManager.getProperty("APPIUM_JS_PATH") + " -v";
+                    String command = System.getenv("APPIUM_BINARY_PATH") + " -v";
                     appiumVersion = commandPrompt.runCommand(command);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
