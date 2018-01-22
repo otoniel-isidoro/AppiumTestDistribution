@@ -17,16 +17,10 @@ import com.thoughtworks.iOS.IOSManager;
 import org.apache.commons.lang3.SystemUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-import se.vidstige.jadb.ConnectionToRemoteDeviceException;
-import se.vidstige.jadb.JadbConnection;
-import se.vidstige.jadb.JadbException;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.MalformedURLException;
-import java.net.URISyntaxException;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -106,6 +100,7 @@ public class DeviceAllocationManager {
                 }
             }
             if (platform.equalsIgnoreCase("android")) {
+                connectToSTF();
                 if (AndroidDeviceConfiguration.validDeviceIds.size() > 0) {
                     LOGGER.info("Adding Android Devices from DeviceList Provided");
                     devices.addAll(AndroidDeviceConfiguration.validDeviceIds);

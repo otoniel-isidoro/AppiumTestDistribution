@@ -75,17 +75,19 @@ public class ScreenShotManager {
         if (AppiumDriverManager.getDriver().getSessionId() != null) {
             System.out.println("Current Running Thread Status"
                     + AppiumDriverManager.getDriver().getSessionId());
-            File scrFile = AppiumDriverManager.getDriver()
-                    .getScreenshotAs(OutputType.FILE);
-            screenShotNameWithTimeStamp = currentDateAndTime();
-            if (AppiumDeviceManager.getMobilePlatform().equals(MobilePlatform.ANDROID)) {
-                getDeviceModel = screenShotNameWithTimeStamp + deviceModel;
-                screenShotAndFrame(status, scrFile, methodName, className, getDeviceModel,
-                        "android", deviceModel);
-            } else if (AppiumDeviceManager.getMobilePlatform().equals(MobilePlatform.IOS)) {
-                getDeviceModel = screenShotNameWithTimeStamp + deviceModel;
-                screenShotAndFrame(status, scrFile, methodName, className, getDeviceModel,
-                        "iOS", deviceModel);
+            if (AppiumDriverManager.getDriver().getSessionId() != null) {
+                File scrFile = AppiumDriverManager.getDriver()
+                        .getScreenshotAs(OutputType.FILE);
+                screenShotNameWithTimeStamp = currentDateAndTime();
+                if (AppiumDeviceManager.getMobilePlatform().equals(MobilePlatform.ANDROID)) {
+                    getDeviceModel = screenShotNameWithTimeStamp + deviceModel;
+                    screenShotAndFrame(status, scrFile, methodName, className, getDeviceModel,
+                            "android", deviceModel);
+                } else if (AppiumDeviceManager.getMobilePlatform().equals(MobilePlatform.IOS)) {
+                    getDeviceModel = screenShotNameWithTimeStamp + deviceModel;
+                    screenShotAndFrame(status, scrFile, methodName, className, getDeviceModel,
+                            "iOS", deviceModel);
+                }
             }
         }
         return getDeviceModel;
@@ -116,7 +118,7 @@ public class ScreenShotManager {
                                     String className, String model,
                                     String platform, String deviceModel) {
         setFailedScreen(
-                  "screenshot/" + platform + "/" + AppiumDeviceManager.getDeviceUDID()
+                "screenshot/" + platform + "/" + AppiumDeviceManager.getDeviceUDID()
                         + "/" + className + "/"
                         + methodName + "/"
                         + screenShotNameWithTimeStamp + deviceModel + "_"
@@ -129,9 +131,9 @@ public class ScreenShotManager {
                         + methodName + "_results.jpeg");
 
         setFramedCapturedScreen("screenshot/" + platform + "/" + AppiumDeviceManager.getDeviceUDID()
-                        + "/" + className
-                        + "/" + methodName + "/" + model + "_"
-                        + methodName + "_results_framed.jpeg");
+                + "/" + className
+                + "/" + methodName + "/" + model + "_"
+                + methodName + "_results_framed.jpeg");
         setFramedFailedScreen(
                 "screenshot/" + platform + "/" + AppiumDeviceManager.getDeviceUDID()
                         + "/" + className
@@ -173,7 +175,7 @@ public class ScreenShotManager {
                                             + "/target/" + getCapturedScreen();
                                     imageUtils.wrapDeviceFrames(files1[i].toString(), screenToFrame,
                                             System.getProperty("user.dir")
-                                                    + "/target/" +  getFramedCapturedScreen());
+                                                    + "/target/" + getFramedCapturedScreen());
                                     deleteFile(screenToFrame);
                                 }
 

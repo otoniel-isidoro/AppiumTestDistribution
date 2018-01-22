@@ -3,7 +3,6 @@ package com.appium.manager;
 import com.annotation.values.Description;
 import com.annotation.values.SkipIf;
 import com.appium.utils.Retry;
-import com.aventstack.extentreports.ExtentTest;
 import com.aventstack.extentreports.Status;
 import com.report.factory.ExtentManager;
 import com.report.factory.ExtentTestManager;
@@ -120,7 +119,7 @@ public final class AppiumParallelMethodTestListener
      */
     @Override
     public void onTestSkipped(ITestResult result) {
-        ExtentTestManager.extent.removeTest(ExtentTestManager.getTest());
+        System.out.println("Skipped...");
         IRetryAnalyzer retryAnalyzer = result.getMethod().getRetryAnalyzer();
         if (((Retry) retryAnalyzer).retryCountForTest == ((Retry) retryAnalyzer).maxRetryCount) {
             (reportManager.parentTest.get()).getModel().setStatus(Status.SKIP);
