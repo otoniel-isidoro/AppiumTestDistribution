@@ -5,12 +5,11 @@ if [ -d "$FILE" ]; then
     printf '%s\n' "Removing file ($FILE)"
     rm -rf "$FILE"
 fi
-cp -f ./Report.json ./webContent/app/src/data
+cp -f ./target/Report.json ./webContent/app/src/data
 ./screenshot_copy.sh
-echo "Kill all processes running on PORT: 3000"
-lsof -t -i tcp:3000 -s tcp:listen | xargs kill
-echo "Installing node packages."
-$(cd webContent/app && npm install)
-echo "Start Website"
-$(cd webContent/app && npm start)
+echo "Generating report..."
+(cd webContent/app && npm install)
+(cd webContent/app && npm run build)
+cp -R ./webContent/app/build/ ./src/main/resources/report
+echo "Report generated inside: ./main/resources/report"
 

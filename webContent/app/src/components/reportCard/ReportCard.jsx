@@ -15,8 +15,9 @@ const styles = {
 }
 
 const ReportCard = ({ content }) => {
-  let screenShotPath = content.screenShot.split('/target')[1]
-  console.log(content)
+  let screenShotPath =process.env.PUBLIC_URL+ content.screenShot.split('/target')[1]
+console.log(process.env.PUBLIC_URL)
+  console.log(screenShotPath)
   return (
     <Col sm={12} md={6} lg={4}>
       <Card style={styles.card} >
@@ -29,7 +30,7 @@ const ReportCard = ({ content }) => {
          
         />
         <div style={styles.imageWrapper}>
-          <img style={styles.image}src={screenShotPath} alt="screenshot" />
+          <img style={styles.image} src={screenShotPath} alt="screenshot" />
         </div>
       </Card>
     </Col>

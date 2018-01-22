@@ -10,11 +10,12 @@ const Header = ({handleDrawerVisibility}) => {
             title="Appium Test Distribution Reporter"
             iconElementRight={<img src={logo} className="App-logo" alt="logo" />}
             onLeftIconButtonTouchTap={()=>{handleDrawerVisibility()}}
-        />
-        // <div className="App-header">
-        //     <img src={logo} className="App-logo" alt="logo" />
-        //     <h2>Appium Test Distribution Reporter</h2>
-        // </div>
+        >
+            <div className="App-header">
+                <img src={logo} className="App-logo" alt="logo" />
+                <h2>Appium Test Distribution Reporter</h2>
+            </div>
+        </AppBar>
     )
 }
 
