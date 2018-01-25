@@ -2,9 +2,14 @@ package com.appium.android;
 
 import com.appium.ios.IOSDeviceConfiguration;
 import com.appium.manager.AppiumDeviceManager;
+import com.appium.manager.ConfigFileManager;
 import com.appium.manager.DeviceAllocationManager;
 import com.appium.utils.CommandPrompt;
+import com.github.yunusmete.stf.api.STFService;
+import com.github.yunusmete.stf.api.ServiceGenerator;
+import com.sun.javafx.binding.StringFormatter;
 import com.thoughtworks.device.Device;
+import org.json.JSONObject;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -20,28 +25,77 @@ public class AndroidDeviceConfiguration {
      * This method gets the device model name
      */
     public String getDeviceModel() {
-        Optional<Device> getModel = getDevice();
-        return (getModel.get().getDeviceModel() + getModel.get().getBrand())
+        String deviceModel = null;
+        Optional<Device> device = getDevice();
+        deviceModel = (device.get().getBrand() + " " + device.get().getDeviceModel())
                 .replaceAll("[^a-zA-Z0-9\\.\\-]", "");
+        return deviceModel;
     }
 
     /*
      * This method gets the device OS API Level
      */
     public String getDeviceOS() {
-        Optional<Device> deviceOS = getDevice();
-        return deviceOS.get().getOsVersion();
+        String deviceOS = null;
+        Optional<Device> device = getDevice();
+        device.get().getOs();
+        return deviceOS;
+    }
+
+    public String getDeviceOSVersion() {
+        Optional<Device> device = getDevice();
+        return device.get().getOsVersion();
     }
 
     private Optional<Device> getDevice() {
-        Optional<Device> deviceOS = null;
+        Optional<Device> device = Optional.empty();
         try {
-            deviceOS = DeviceAllocationManager.getInstance().deviceManager.stream().filter(device ->
-                    device.getUdid().equals(AppiumDeviceManager.getDeviceUDID())).findFirst();
+            device = DeviceAllocationManager.getInstance().deviceManager.stream().filter(deviceMan ->
+                    deviceMan.getUdid().equals(AppiumDeviceManager.getDeviceUDID())).findFirst();
+            if (!device.isPresent()) {
+                if (DeviceAllocationManager.STF_SERVICE_URL != null
+                        && DeviceAllocationManager.ACCESS_TOKEN != null) {
+                    STFService stfService = ServiceGenerator.createService(STFService.class,
+                            DeviceAllocationManager.STF_SERVICE_URL + "/api/v1",
+                            DeviceAllocationManager.ACCESS_TOKEN);
+                    Optional<com.github.yunusmete.stf.model.Device> stfDevice = stfService.getDevices().getDevices().stream().filter(androidDevice ->
+                            AppiumDeviceManager.getDeviceUDID().equalsIgnoreCase(androidDevice.getSerial()) ||
+                                    AppiumDeviceManager.getDeviceUDID().equalsIgnoreCase(androidDevice.getRemoteConnectUrl().toString())
+                    ).findFirst();
+                    if (stfDevice.isPresent()) {
+                        device = stfDeviceToAdbDevice(stfDevice);
+                    }
+                }
+            }
+
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return deviceOS;
+        return device;
+    }
+
+    public Optional<Device> stfDeviceToAdbDevice(Optional<com.github.yunusmete.stf.model.Device> stfDevice) {
+        JSONObject json = new JSONObject();
+        if (ConfigFileManager.getInstance().getProperty("STF_ADB_REMOTE_CONNECT")
+                .equalsIgnoreCase("true")) {
+            json.put("udid", stfDevice.get().getRemoteConnectUrl().toString());
+        } else {
+            json.put("udid", stfDevice.get().getSerial());
+        }
+        if (stfDevice.get().getNotes() != null) {
+            json.put("name", stfDevice.get().getNotes());
+        } else {
+            json.put("name", stfDevice.get().getModel());
+        }
+        json.put("osVersion", stfDevice.get().getVersion());
+        json.put("brand", stfDevice.get().getManufacturer());
+        json.put("apiLevel", stfDevice.get().getSdk());
+        json.put("isDevice", "true");
+        json.put("deviceModel", stfDevice.get().getModel());
+        String screenSize = StringFormatter.format("%sX%s", stfDevice.get().getDisplay().getWidth(),
+                stfDevice.get().getDisplay().getHeight()).getValue();
+        json.put("screenSize", screenSize);
+        return Optional.of(new Device(json));
     }
 
     public String screenRecord(String fileName)

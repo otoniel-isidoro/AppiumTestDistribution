@@ -111,7 +111,8 @@ public class AppiumServerManager {
                 && configFileManager.getProperty("STF_ACCESS_TOKEN") != null) {
             List<Device> devices = DeviceAllocationManager.stfService.getDevices().getDevices();
             devices.forEach(device -> {
-                if (device.isPresent() && device.getOwner() != null && device.isUsing()) {
+                if (device.isPresent() && device.getOwner() != null && device.isUsing() &&
+                        device.getUsage().equalsIgnoreCase("automation")) {
                     DeviceAllocationManager.stfService.deleteDeviceBySerial(device.getSerial());
                 }
             });

@@ -14,22 +14,24 @@ import com.thoughtworks.android.AndroidManager;
 import com.thoughtworks.device.Device;
 import com.thoughtworks.device.DeviceManager;
 import com.thoughtworks.iOS.IOSManager;
+import com.vdurmont.semver4j.Semver;
+import org.apache.commons.collections.ListUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.springframework.util.CollectionUtils;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Logger;
+
+import static com.sun.jmx.snmp.ThreadContext.contains;
 
 /**
  * DeviceAllocationManager - Handles device initialisation, allocation and de-allocattion
@@ -41,9 +43,9 @@ public class DeviceAllocationManager {
     private static IOSManager iosDevice;
     private static AndroidManager androidManager;
     public List<Device> deviceManager;
-    private static final String STF_SERVICE_URL = ConfigFileManager.getInstance().getProperty("STF_URL");
-    private static final String ACCESS_TOKEN = ConfigFileManager.getInstance().getProperty("STF_ACCESS_TOKEN");
-    static STFService stfService;
+    public static final String STF_SERVICE_URL = ConfigFileManager.getInstance().getProperty("STF_URL");
+    public static final String ACCESS_TOKEN = ConfigFileManager.getInstance().getProperty("STF_ACCESS_TOKEN");
+    public static STFService stfService;
     private static final Logger LOGGER = Logger.getLogger(Class.class.getName());
     private SimManager simManager = new SimManager();
     private AppiumDriverManager appiumDriverManager;
@@ -60,10 +62,10 @@ public class DeviceAllocationManager {
             configFileManager = ConfigFileManager.getInstance();
             stfService = ServiceGenerator.createService(STFService.class,
                     STF_SERVICE_URL + "/api/v1", ACCESS_TOKEN);
-            connectToSTF();
             deviceManager = new CopyOnWriteArrayList<>(new DeviceManager().getDeviceProperties());
+            connectToSTF();
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new Exception(e.getMessage(), e);
         }
         setFlagsForCapsValues();
         initializeDevices();
@@ -100,7 +102,6 @@ public class DeviceAllocationManager {
                 }
             }
             if (platform.equalsIgnoreCase("android")) {
-                connectToSTF();
                 if (AndroidDeviceConfiguration.validDeviceIds.size() > 0) {
                     LOGGER.info("Adding Android Devices from DeviceList Provided");
                     devices.addAll(AndroidDeviceConfiguration.validDeviceIds);
@@ -251,25 +252,54 @@ public class DeviceAllocationManager {
         }
     }
 
+    private Boolean isAllowed(String serial, String version) {
+        Boolean allowed = true;
+        ConfigFileManager config = ConfigFileManager.getInstance();
+        if (config.getProperty("ONLY_DEVICES") != null) {
+            allowed = Arrays.asList(config.getProperty("ONLY_DEVICES").split(",")).contains(serial);
+        }
+        if (config.getProperty("SKIP_DEVICES") != null) {
+            if (Arrays.asList(config.getProperty("SKIP_DEVICES").split(",")).contains(serial)) {
+                allowed = false;
+            }
+        }
+        Semver deviceOSVersion = new Semver(version, Semver.SemverType.LOOSE);
+        if (config.getProperty("MIN_OS_VERSION") != null) {
+            if (deviceOSVersion.isLowerThan(config.getProperty("MIN_OS_VERSION"))) {
+                allowed = false;
+            }
+        }
+        if (config.getProperty("MAX_OS_VERSION") != null) {
+            if (deviceOSVersion.isGreaterThan(config.getProperty("MAX_OS_VERSION"))) {
+                allowed = false;
+            }
+        }
+        return allowed;
+    }
+
     private void connectToSTFServer() {
         DeviceResponse devices = stfService.getDevices();
-        List<com.github.yunusmete.stf.model.Device> deviceList = devices.getDevices();
-        for (com.github.yunusmete.stf.model.Device device : deviceList) {
+        for (com.github.yunusmete.stf.model.Device device : devices.getDevices()) {
             if (device.isPresent() && device.isReady()) {
                 if (device.getOwner() == null) {
-                    stfService.addDeviceToUser(new DeviceBody(device.getSerial(), 90000));
-                    if (ConfigFileManager.getInstance().getProperty("STF_ADB_REMOTE_CONNECT").equalsIgnoreCase("true")) {
-                        RemoteConnectResponse remoteConnectResponse = stfService.remoteConnectDeviceBySerial(device.getSerial(), new DeviceBody(device.getSerial(), 90000));
-                        if (remoteConnectResponse.isSuccess()) {
-                            try {
-                                androidManager.connectRemote(remoteConnectResponse.getRemoteConnectUrl());
-                                Thread.sleep(100);
-                            } catch (Exception e) {
-                                e.printStackTrace();
+                    if (isAllowed(device.getSerial(), device.getVersion())) {
+                        stfService.addDeviceToUser(new DeviceBody(device.getSerial(), 90000));
+                        if (ConfigFileManager.getInstance().getProperty("STF_ADB_REMOTE_CONNECT").equalsIgnoreCase("true")) {
+                            RemoteConnectResponse remoteConnectResponse = stfService.remoteConnectDeviceBySerial(device.getSerial(), new DeviceBody(device.getSerial(), 90000));
+                            if (remoteConnectResponse.isSuccess()) {
+                                device.setRemoteConnect(true);
+                                device.setRemoteConnectUrl(remoteConnectResponse.getRemoteConnectUrl());
+                                try {
+                                    androidManager.connectRemote(remoteConnectResponse.getRemoteConnectUrl());
+                                    deviceManager.add(new AndroidDeviceConfiguration()
+                                            .stfDeviceToAdbDevice(Optional.of(device)).get());
+                                    Thread.sleep(100);
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
                             }
                         }
                     }
-
                 }
             }
         }

@@ -62,7 +62,7 @@ public class AppiumDeviceManager {
 
     public String getDeviceVersion() {
         if (getMobilePlatform().equals(MobilePlatform.ANDROID)) {
-            return androidDeviceConfiguration.getDeviceOS();
+            return androidDeviceConfiguration.getDeviceOSVersion();
         } else if (getMobilePlatform().equals(MobilePlatform.IOS)) {
             try {
                 return iosDeviceConfiguration.getIOSDeviceProductVersion();

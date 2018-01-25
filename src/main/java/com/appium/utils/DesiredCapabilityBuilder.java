@@ -1,5 +1,6 @@
 package com.appium.utils;
 
+import com.appium.android.AndroidDeviceConfiguration;
 import com.appium.entities.MobilePlatform;
 import com.appium.ios.IOSDeviceConfiguration;
 import com.appium.manager.AppiumDeviceManager;
@@ -44,10 +45,10 @@ public class DesiredCapabilityBuilder {
     }
 
     public void buildDesiredCapability(String platform,
-                                                      String jsonPath) throws Exception {
+                                       String jsonPath) throws Exception {
         Object port = ((HashMap) DeviceAllocationManager.getInstance()
                 .deviceMapping.get(AppiumDeviceManager
-                .getDeviceUDID())).get("port");
+                        .getDeviceUDID())).get("port");
         DesiredCapabilities desiredCapabilities = new DesiredCapabilities();
         JSONArray jsonParsedObject = new JsonParser(jsonPath).getJsonParsedObject();
         Object getPlatformObject = jsonParsedObject.stream().filter(o -> ((JSONObject) o)
@@ -89,20 +90,23 @@ public class DesiredCapabilityBuilder {
                     }
                 });
         if (AppiumDeviceManager.getMobilePlatform().equals(MobilePlatform.ANDROID)) {
+            AndroidDeviceConfiguration adc = new AndroidDeviceConfiguration();
+            desiredCapabilities.setCapability(MobileCapabilityType.DEVICE_NAME,
+                    adc.getDeviceModel());
+            desiredCapabilities.setCapability(MobileCapabilityType.PLATFORM_VERSION,
+                    adc.getDeviceOSVersion());
+            desiredCapabilities.setCapability(AndroidMobileCapabilityType.SYSTEM_PORT,
+                    Integer.parseInt(port.toString()));
             if (desiredCapabilities.getCapability("automationName") == null
                     || desiredCapabilities.getCapability("automationName")
                     .toString() != "UIAutomator2") {
-                desiredCapabilities.setCapability(MobileCapabilityType.AUTOMATION_NAME,
-                        AutomationName.ANDROID_UIAUTOMATOR2);
-                desiredCapabilities.setCapability(AndroidMobileCapabilityType.SYSTEM_PORT,
-                        Integer.parseInt(port.toString()));
-                Device androidDevice = DeviceAllocationManager.getInstance().deviceManager.stream().filter(
-                        device -> Objects.equals(device.getUdid(), AppiumDeviceManager.getDeviceUDID())
-                ).findFirst().get();
-                desiredCapabilities.setCapability(MobileCapabilityType.DEVICE_NAME, androidDevice.getName());
-                desiredCapabilities.setCapability(MobileCapabilityType.PLATFORM_VERSION,
-                        androidDevice.getOsVersion());
-
+                if (Integer.valueOf(adc.getDeviceOSVersion().split("\\.")[0]) < 5) {
+                    desiredCapabilities.setCapability(MobileCapabilityType.AUTOMATION_NAME,
+                            AutomationName.APPIUM);
+                } else {
+                    desiredCapabilities.setCapability(MobileCapabilityType.AUTOMATION_NAME,
+                            AutomationName.ANDROID_UIAUTOMATOR2);
+                }
             }
             appPackage(desiredCapabilities);
         } else if (AppiumDeviceManager.getMobilePlatform().equals(MobilePlatform.IOS)) {
