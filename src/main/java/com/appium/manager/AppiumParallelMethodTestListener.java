@@ -5,16 +5,7 @@ import com.annotation.values.SkipIf;
 import com.appium.utils.Retry;
 import com.aventstack.extentreports.Status;
 import com.report.factory.ExtentManager;
-import com.report.factory.ExtentTestManager;
-import org.testng.IInvokedMethod;
-import org.testng.IInvokedMethodListener;
-import org.testng.IRetryAnalyzer;
-import org.testng.ISuite;
-import org.testng.ISuiteListener;
-import org.testng.ITestContext;
-import org.testng.ITestListener;
-import org.testng.ITestResult;
-import org.testng.SkipException;
+import org.testng.*;
 
 import java.io.IOException;
 

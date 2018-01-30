@@ -9,6 +9,7 @@ import com.github.yunusmete.stf.api.STFService;
 import com.github.yunusmete.stf.api.ServiceGenerator;
 import com.sun.javafx.binding.StringFormatter;
 import com.thoughtworks.device.Device;
+import org.apache.commons.lang.StringUtils;
 import org.json.JSONObject;
 
 import java.io.IOException;
@@ -74,7 +75,7 @@ public class AndroidDeviceConfiguration {
         return device;
     }
 
-    public Optional<Device> stfDeviceToAdbDevice(Optional<com.github.yunusmete.stf.model.Device> stfDevice) {
+    public Optional<Device> stfDeviceToAdbDevice(Optional<com.github.yunusmete.stf.model.Device> stfDevice) throws IOException, InterruptedException {
         JSONObject json = new JSONObject();
         if (ConfigFileManager.getInstance().getProperty("STF_ADB_REMOTE_CONNECT")
                 .equalsIgnoreCase("true")) {
@@ -91,6 +92,7 @@ public class AndroidDeviceConfiguration {
         json.put("brand", stfDevice.get().getManufacturer());
         json.put("apiLevel", stfDevice.get().getSdk());
         json.put("isDevice", "true");
+        json.put("locale", getDevicLocale());
         json.put("deviceModel", stfDevice.get().getModel());
         String screenSize = StringFormatter.format("%sX%s", stfDevice.get().getDisplay().getWidth(),
                 stfDevice.get().getDisplay().getHeight()).getValue();
@@ -120,6 +122,17 @@ public class AndroidDeviceConfiguration {
             throws IOException, InterruptedException {
         return cmd.runCommand("adb -s " + AppiumDeviceManager.getDeviceUDID()
                 + " shell getprop ro.product.manufacturer")
+                .trim();
+    }
+
+    public String getDevicLocale() throws IOException, InterruptedException {
+        return getDevicLocale(AppiumDeviceManager.getDeviceUDID());
+    }
+
+    public String getDevicLocale(String deviceUdid)
+            throws IOException, InterruptedException {
+        return cmd.runCommand("adb -s " + deviceUdid
+                + " shell getprop persist.sys.locale")
                 .trim();
     }
 

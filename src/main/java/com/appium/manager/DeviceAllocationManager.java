@@ -15,11 +15,10 @@ import com.thoughtworks.device.Device;
 import com.thoughtworks.device.DeviceManager;
 import com.thoughtworks.iOS.IOSManager;
 import com.vdurmont.semver4j.Semver;
-import org.apache.commons.collections.ListUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-import org.springframework.util.CollectionUtils;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -30,8 +29,6 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Logger;
-
-import static com.sun.jmx.snmp.ThreadContext.contains;
 
 /**
  * DeviceAllocationManager - Handles device initialisation, allocation and de-allocattion
@@ -275,6 +272,23 @@ public class DeviceAllocationManager {
             }
         }
         return allowed;
+    }
+
+    public String getAndroidGPSCurrentStatus(String deviceId) throws Exception {
+        return androidManager.executeShellCommand(deviceId, "settings get secure location_providers_allowed");
+    }
+
+    public void enabledGPSOnAndroid(String deviceId) throws Exception {
+        String gpsEnabled = ConfigFileManager.getInstance().getProperty("GPS_ENABLED");
+        if (gpsEnabled != null) {
+            if ("true".equalsIgnoreCase(gpsEnabled)) {
+                androidManager.executeShellCommand(deviceId, "settings put secure location_providers_allowed +gps");
+                androidManager.executeShellCommand(deviceId, "settings put secure location_providers_allowed +network");
+            } else {
+                androidManager.executeShellCommand(deviceId, "settings put secure location_providers_allowed -gps");
+                androidManager.executeShellCommand(deviceId, "settings put secure location_providers_allowed -network");
+            }
+        }
     }
 
     private void connectToSTFServer() {

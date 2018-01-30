@@ -79,7 +79,7 @@ class TestLogger {
         HashMap<String, String> logs = new HashMap<>();
         String className = result.getInstance().getClass().getSimpleName();
         stopViewRecording(result, className);
-        String adbPath = System.getProperty("user.dir") + "/target/adblogs/"
+        String adbPath = "adblogs/"
                 + AppiumDeviceManager.getDeviceUDID()
                 + "__"
                 + result.getMethod().getMethodName()
@@ -139,7 +139,10 @@ class TestLogger {
                 System.out.println("");
             }
         }
-        deleteSuccessVideos(result, className);
+        if(ConfigFileManager.getInstance().getProperty("KEEP_SUCCESS_VIDEOS")==null ||
+                ConfigFileManager.getInstance().getProperty("KEEP_SUCCESS_VIDEOS").equalsIgnoreCase("false")){
+            deleteSuccessVideos(result, className);
+        }
     }
 
     private void deleteSuccessVideos(ITestResult result, String className) {

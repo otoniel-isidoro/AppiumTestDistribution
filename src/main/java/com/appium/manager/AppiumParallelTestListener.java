@@ -8,32 +8,18 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
-import org.testng.IClassListener;
-import org.testng.IInvokedMethod;
-import org.testng.IInvokedMethodListener;
-import org.testng.ISuite;
-import org.testng.ISuiteListener;
-import org.testng.ISuiteResult;
-import org.testng.ITestClass;
-import org.testng.ITestContext;
-import org.testng.ITestListener;
-import org.testng.ITestResult;
-import org.testng.SkipException;
+import org.testng.*;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 
 public final class AppiumParallelTestListener
-        implements IClassListener, IInvokedMethodListener, ISuiteListener,ITestListener {
+        implements IClassListener, IInvokedMethodListener, ISuiteListener, ITestListener {
 
     private ReportManager reportManager;
     private DeviceAllocationManager deviceAllocationManager;
@@ -62,10 +48,8 @@ public final class AppiumParallelTestListener
     @Override
     public void beforeInvocation(IInvokedMethod method, ITestResult testResult) {
         try {
-            SkipIf skip =
-                    method.getTestMethod()
-                            .getConstructorOrMethod()
-                            .getMethod().getAnnotation(SkipIf.class);
+            SkipIf skip = method.getTestMethod().getConstructorOrMethod()
+                    .getMethod().getAnnotation(SkipIf.class);
             if (skip != null) {
                 String info = skip.platform();
                 if (AppiumDriverManager.getDriver().getPlatformName().contains(info)) {
@@ -246,6 +230,10 @@ public final class AppiumParallelTestListener
             String className = testClass.getRealClass().getSimpleName();
             deviceAllocationManager.allocateDevice(device,
                     deviceAllocationManager.getNextAvailableDeviceId());
+            if(AppiumDriverManager.getDriver()!= null && AppiumDriverManager.getDriver().getPlatformName()!= null &&
+                    AppiumDriverManager.getDriver().getPlatformName().equalsIgnoreCase("android")){
+                deviceAllocationManager.enabledGPSOnAndroid(device);
+            }
             if (getClass().getAnnotation(Description.class) != null) {
                 testDescription = getClass().getAnnotation(Description.class).value();
             }
