@@ -79,7 +79,7 @@ class TestLogger {
         HashMap<String, String> logs = new HashMap<>();
         String className = result.getInstance().getClass().getSimpleName();
         stopViewRecording(result, className);
-        String adbPath = "adblogs/"
+        String adbPath = System.getProperty("user.dir") + "/target/adblogs/"
                 + AppiumDeviceManager.getDeviceUDID()
                 + "__"
                 + result.getMethod().getMethodName()

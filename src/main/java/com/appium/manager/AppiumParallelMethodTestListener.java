@@ -3,9 +3,19 @@ package com.appium.manager;
 import com.annotation.values.Description;
 import com.annotation.values.SkipIf;
 import com.appium.utils.Retry;
+import com.aventstack.extentreports.ExtentTest;
 import com.aventstack.extentreports.Status;
 import com.report.factory.ExtentManager;
-import org.testng.*;
+import com.report.factory.ExtentTestManager;
+import org.testng.IInvokedMethod;
+import org.testng.IInvokedMethodListener;
+import org.testng.IRetryAnalyzer;
+import org.testng.ISuite;
+import org.testng.ISuiteListener;
+import org.testng.ITestContext;
+import org.testng.ITestListener;
+import org.testng.ITestResult;
+import org.testng.SkipException;
 
 import java.io.IOException;
 
@@ -67,6 +77,9 @@ public final class AppiumParallelMethodTestListener
 
     @Override
     public void afterInvocation(IInvokedMethod method, ITestResult testResult) {
+        if (testResult.getStatus() == ITestResult.SKIP) {
+            ExtentTestManager.extent.removeTest(ExtentTestManager.getTest());
+        }
         try {
             if (testResult.getStatus() == ITestResult.SUCCESS
                     || testResult.getStatus() == ITestResult.FAILURE) {
@@ -110,7 +123,7 @@ public final class AppiumParallelMethodTestListener
      */
     @Override
     public void onTestSkipped(ITestResult result) {
-        System.out.println("Skipped...");
+        ExtentTestManager.extent.removeTest(ExtentTestManager.getTest());
         IRetryAnalyzer retryAnalyzer = result.getMethod().getRetryAnalyzer();
         if (((Retry) retryAnalyzer).retryCountForTest == ((Retry) retryAnalyzer).maxRetryCount) {
             (reportManager.parentTest.get()).getModel().setStatus(Status.SKIP);
