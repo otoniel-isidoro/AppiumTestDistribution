@@ -15,19 +15,18 @@ import com.thoughtworks.device.Device;
 import com.thoughtworks.device.DeviceManager;
 import com.thoughtworks.iOS.IOSManager;
 import com.vdurmont.semver4j.Semver;
-import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -50,7 +49,7 @@ public class DeviceAllocationManager {
     private static boolean deviceCapsPresent = false;
     private ConfigFileManager configFileManager;
 
-    private DeviceAllocationManager() throws Exception {
+    private DeviceAllocationManager() {
         try {
             iosDevice = new IOSManager();
             deviceMapping = new ConcurrentHashMap<>();
@@ -59,16 +58,18 @@ public class DeviceAllocationManager {
             configFileManager = ConfigFileManager.getInstance();
             stfService = ServiceGenerator.createService(STFService.class,
                     STF_SERVICE_URL + "/api/v1", ACCESS_TOKEN);
-            deviceManager = new CopyOnWriteArrayList<>(new DeviceManager().getDeviceProperties());
             connectToSTF();
-        } catch (IOException e) {
-            throw new Exception(e.getMessage(), e);
+            if(Objects.isNull(deviceManager)){
+                deviceManager = new CopyOnWriteArrayList<>(new DeviceManager().getDeviceProperties());
+            }
+            setFlagsForCapsValues();
+            initializeDevices();
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, e.getMessage(), e);
         }
-        setFlagsForCapsValues();
-        initializeDevices();
     }
 
-    public static DeviceAllocationManager getInstance() throws Exception {
+    public static DeviceAllocationManager getInstance() {
         if (instance == null) {
             instance = new DeviceAllocationManager();
         }
@@ -208,7 +209,7 @@ public class DeviceAllocationManager {
                 connectToSTFServer();
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, e.getMessage(), e);
         }
     }
 
@@ -305,17 +306,27 @@ public class DeviceAllocationManager {
                                 device.setRemoteConnectUrl(remoteConnectResponse.getRemoteConnectUrl());
                                 try {
                                     androidManager.connectRemote(remoteConnectResponse.getRemoteConnectUrl());
-                                    deviceManager.add(new AndroidDeviceConfiguration()
-                                            .stfDeviceToAdbDevice(Optional.of(device)).get());
                                     Thread.sleep(100);
+                                    if(Objects.isNull(deviceManager)){
+                                        deviceManager = new ArrayList<>();
+                                    }
+                                    new AndroidDeviceConfiguration()
+                                            .stfDeviceToAdbDevice(Optional.of(device)).ifPresent(device1 -> deviceManager.add(device1));
                                 } catch (Exception e) {
-                                    e.printStackTrace();
+                                    LOGGER.log(Level.SEVERE, e.getMessage(), e);
                                 }
+                            } else {
+                                LOGGER.log(Level.WARNING, "Cant connect remote to device {} ({})", new Object[]{device.getModel(), device.getNotes()});
                             }
                         }
                     }
                 }
             }
+        }
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
     }
 }

@@ -8,6 +8,7 @@ import com.aventstack.extentreports.reporter.ExtentXReporter;
 import com.aventstack.extentreports.reporter.KlovReporter;
 import com.aventstack.extentreports.reporter.configuration.ChartLocation;
 import com.aventstack.extentreports.reporter.configuration.Theme;
+import com.aventstack.extentreports.reporter.converters.ExtentHtmlBddNodesConverter;
 import org.apache.commons.io.FileUtils;
 
 import java.io.File;
@@ -41,11 +42,12 @@ public class ExtentManager {
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-                extent.setSystemInfo("AppiumClient", "5.0.0-BETA6");
+                extent.setGherkinDialect("pt");
+                extent.setSystemInfo("AppiumClient", "5.0.4");
                 extent.setSystemInfo("AppiumServer", appiumVersion.replace("\n", ""));
                 extent.setSystemInfo("Runner", configFileManager.getProperty("RUNNER"));
-                extent.setSystemInfo("AppiumServerLogs","<a target=\"_parent\" href=" + "/appiumlogs/appiumlogs/"
-                        + ".txt" + ">AppiumServerLogs</a>");
+                extent.setSystemInfo("AppiumServerLogs",
+                        "<a target=\"_blank\" href=\"appiumlogs/appium_logs.txt\">AppiumServerLogs</a>");
                 return extent;
             } catch (IOException e) {
                 e.printStackTrace();
@@ -75,10 +77,10 @@ public class ExtentManager {
 
         // report title
         //String documentTitle = prop.getProperty("documentTitle", "aventstack - Extent");
-        htmlReporter.config().setDocumentTitle("AppiumTestDistribution");
-        htmlReporter.config().setReportName("AppiumTestDistribution");
+        htmlReporter.config().setDocumentTitle(configFileManager.getProperty("projectName", "ExtentReports"));
+        htmlReporter.config().setReportName(configFileManager.getProperty("reportName", "ExtentReports"));
         htmlReporter.config().setTestViewChartLocation(ChartLocation.TOP);
-        htmlReporter.config().setTheme(Theme.STANDARD);
+        htmlReporter.config().setTheme(Theme.DARK);
         return htmlReporter;
     }
 
@@ -108,8 +110,8 @@ public class ExtentManager {
         KlovReporter klov = new KlovReporter();
         if (isMongoPortHostProvided()) {
             klov.initMongoDbConnection(getMongoHost(), getMongoPort());
-            String klovProjectName = System.getenv("projectname");
-            String klovReportName = System.getenv("reportname");
+            String klovProjectName = configFileManager.getProperty("projectName", "ExtentReports");
+            String klovReportName = configFileManager.getProperty("reportName", "ExtentReports");
             String projectname = klovProjectName;
             String reportname = klovReportName;
             if (klovProjectName == null || klovReportName == null) {

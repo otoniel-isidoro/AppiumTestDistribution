@@ -3,6 +3,8 @@ package com.report.factory;
 import com.aventstack.extentreports.ExtentReports;
 import com.aventstack.extentreports.ExtentTest;
 import com.aventstack.extentreports.Status;
+import gherkin.formatter.model.Feature;
+import gherkin.formatter.model.Tag;
 import org.testng.Reporter;
 
 import java.util.Properties;
@@ -25,6 +27,13 @@ public class ExtentTestManager { // new
         return getTest();
     }
 
+    public synchronized static ExtentTest createBDDTest(Feature feature, String description,
+                                                        String deviceId) {
+        test = extent.createTest(com.aventstack.extentreports.gherkin.model.Feature.class, feature.getName(), description).assignCategory(deviceId);
+        extentTest.set(test);
+        return getTest();
+    }
+
     public synchronized static ExtentTest createTest(String name, String description) {
         return createTest(name, description, String.valueOf(Thread.currentThread().getId()));
     }
@@ -32,6 +41,7 @@ public class ExtentTestManager { // new
     public synchronized static ExtentTest createTest(String name) {
         return createTest(name, "Sample Test");
     }
+
 
     public synchronized static void logOutPut(String imgSrc, String headerName) {
         String imgPath = "<div class='col l4 m6 s12'>"

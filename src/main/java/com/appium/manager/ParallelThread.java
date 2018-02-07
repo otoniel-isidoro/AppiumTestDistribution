@@ -137,7 +137,6 @@ public class ParallelThread {
         }
 
         if (framework.equalsIgnoreCase("cucumber")) {
-            //addPluginToCucumberRunner();
             if (runner.equalsIgnoreCase("distribute")) {
                 myTestExecutor
                         .constructXmlSuiteDistributeCucumber(deviceCount);

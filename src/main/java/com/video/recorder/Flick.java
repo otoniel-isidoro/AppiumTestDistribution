@@ -88,7 +88,7 @@ public class Flick extends CommandPrompt {
         if (AppiumDeviceManager.getDeviceUDID().length() != 40) {
             String videoLocationAndroid =
                 videoPath + "/target/screenshot/android/"
-                        + AppiumDeviceManager.getDeviceUDID() + "/"
+                        + AppiumDeviceManager.getDeviceUDID() + "/" + androidDeviceConfiguration.getDeviceModel() + "/"
                     + className + "/" + methodName;
             fileDirectoryCheck(videoLocationAndroid);
             if (command.equals("start")) {
@@ -97,7 +97,7 @@ public class Flick extends CommandPrompt {
                             .equals("unknown") && androidDeviceConfiguration
                             .checkIfRecordable()) {
                         screenRecord = Runtime.getRuntime()
-                            .exec(androidDeviceConfiguration.screenRecord(methodName));
+                            .exec(androidDeviceConfiguration.screenRecord(videoFileName));
                         System.out.println(
                             "ScreenRecording has started..." + Thread.currentThread().getId());
                         androidScreenRecordProcess
@@ -120,8 +120,8 @@ public class Flick extends CommandPrompt {
                     && androidDeviceConfiguration.checkIfRecordable()) {
                     stopRecording();
                     androidDeviceConfiguration
-                        .pullVideoFromDevice(methodName, videoLocationAndroid)
-                        .removeVideoFileFromDevice(methodName);
+                        .pullVideoFromDevice(videoFileName, videoLocationAndroid)
+                        .removeVideoFileFromDevice(videoFileName);
                 } else {
                     android = "flick video -a " + command + " -p android -o "
                             + videoLocationAndroid + " -n " + videoFileName

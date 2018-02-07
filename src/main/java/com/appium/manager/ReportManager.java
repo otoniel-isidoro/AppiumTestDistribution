@@ -5,6 +5,7 @@ import com.appium.utils.GetDescriptionForChildNode;
 import com.aventstack.extentreports.ExtentTest;
 import com.aventstack.extentreports.Status;
 import com.report.factory.ExtentTestManager;
+import gherkin.formatter.model.Feature;
 import org.testng.ITestResult;
 import org.testng.annotations.Test;
 
@@ -48,6 +49,15 @@ public class ReportManager {
         parent = ExtentTestManager.createTest(methodName, testDescription,
             appiumDeviceManager.getDeviceModel()
                     + AppiumDeviceManager.getDeviceUDID());
+        parentTest.set(parent);
+        return parent;
+    }
+
+    public ExtentTest createParentNodeBDDExtent(Feature feature, String testDescription)
+            throws IOException, InterruptedException {
+        parent = ExtentTestManager.createBDDTest(feature, testDescription,
+                appiumDeviceManager.getDeviceModel()
+                        + AppiumDeviceManager.getDeviceUDID());
         parentTest.set(parent);
         return parent;
     }

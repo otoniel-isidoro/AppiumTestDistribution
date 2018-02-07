@@ -22,7 +22,7 @@ import java.util.logging.Level;
 /**
  * Created by saikrisv on 24/01/17.
  */
-class TestLogger {
+public class TestLogger {
     private Flick videoRecording;
     public File logFile;
     private List<LogEntry> logEntries;

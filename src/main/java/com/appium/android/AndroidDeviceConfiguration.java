@@ -77,26 +77,28 @@ public class AndroidDeviceConfiguration {
 
     public Optional<Device> stfDeviceToAdbDevice(Optional<com.github.yunusmete.stf.model.Device> stfDevice) throws IOException, InterruptedException {
         JSONObject json = new JSONObject();
-        if (ConfigFileManager.getInstance().getProperty("STF_ADB_REMOTE_CONNECT")
-                .equalsIgnoreCase("true")) {
-            json.put("udid", stfDevice.get().getRemoteConnectUrl().toString());
-        } else {
-            json.put("udid", stfDevice.get().getSerial());
+        if (stfDevice.isPresent()){
+            if (ConfigFileManager.getInstance().getProperty("STF_ADB_REMOTE_CONNECT")
+                    .equalsIgnoreCase("true")) {
+                json.put("udid", stfDevice.get().getRemoteConnectUrl().toString());
+            } else {
+                json.put("udid", stfDevice.get().getSerial());
+            }
+            if (stfDevice.get().getNotes() != null) {
+                json.put("name", stfDevice.get().getNotes());
+            } else {
+                json.put("name", stfDevice.get().getModel());
+            }
+            json.put("osVersion", stfDevice.get().getVersion());
+            json.put("brand", stfDevice.get().getManufacturer());
+            json.put("apiLevel", stfDevice.get().getSdk());
+            json.put("isDevice", "true");
+            json.put("locale", getDevicLocale());
+            json.put("deviceModel", stfDevice.get().getModel());
+            String screenSize = StringFormatter.format("%sX%s", stfDevice.get().getDisplay().getWidth(),
+                    stfDevice.get().getDisplay().getHeight()).getValue();
+            json.put("screenSize", screenSize);
         }
-        if (stfDevice.get().getNotes() != null) {
-            json.put("name", stfDevice.get().getNotes());
-        } else {
-            json.put("name", stfDevice.get().getModel());
-        }
-        json.put("osVersion", stfDevice.get().getVersion());
-        json.put("brand", stfDevice.get().getManufacturer());
-        json.put("apiLevel", stfDevice.get().getSdk());
-        json.put("isDevice", "true");
-        json.put("locale", getDevicLocale());
-        json.put("deviceModel", stfDevice.get().getModel());
-        String screenSize = StringFormatter.format("%sX%s", stfDevice.get().getDisplay().getWidth(),
-                stfDevice.get().getDisplay().getHeight()).getValue();
-        json.put("screenSize", screenSize);
         return Optional.of(new Device(json));
     }
 
