@@ -116,7 +116,6 @@ public class ParallelThread {
         System.out.println("starting running tests in threads");
 
         List<Class> testcases = new ArrayList<>();
-
         boolean hasFailures = false;
         String runner = configFileManager.getProperty("RUNNER");
         String framework = configFileManager.getProperty("FRAMEWORK");
@@ -137,6 +136,7 @@ public class ParallelThread {
         }
 
         if (framework.equalsIgnoreCase("cucumber")) {
+            createCucumberParallelFolder();
             if (runner.equalsIgnoreCase("distribute")) {
                 myTestExecutor
                         .constructXmlSuiteDistributeCucumber(deviceCount);
@@ -159,6 +159,18 @@ public class ParallelThread {
             System.out.println("creating directory: " + "ADBLogs");
             try {
                 adb_logs.mkdir();
+            } catch (SecurityException se) {
+                se.printStackTrace();
+            }
+        }
+    }
+
+    private void createCucumberParallelFolder(){
+        File f = new File(System.getProperty("user.dir") + "/target/cucumber-parallel/");
+        if (!f.exists()) {
+            System.out.println("creating directory: cucumber-parallel");
+            try {
+                f.mkdir();
             } catch (SecurityException se) {
                 se.printStackTrace();
             }
